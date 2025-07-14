@@ -17,7 +17,7 @@ This guide provides a detailed comparison between two approaches for implementin
 #### Light Account + Pimlico
 
 ```typescript
-const smartAccountClient = createSmartAccountClient({
+const pimlicoSmartAccountClient = createSmartAccountClient({
   chain: arbitrum,
   account: smartAccountClient?.account,
   bundlerTransport: http(`/api/pimlico?chainId=${arbitrum.id}`),
@@ -45,8 +45,8 @@ import { sponsored, WalletEncoding } from "@gelatonetwork/smartwallet";
 **Code**
 
 ```typescript
-const smartAccountClient = createSmartAccountClient({
-  account: account,
+const gelatoSmartAccountClient = createSmartAccountClient({
+  account: smartAccountClient?.account,
   chain: arbitrumSepolia,
   // Important: Chain transport (chain rpc) must be passed here instead of bundler transport
   bundlerTransport: http(),
@@ -65,7 +65,7 @@ const smartAccountClient = createSmartAccountClient({
 #### Light Account + Pimlico
 
 ```typescript
-const hash = await smartAccountClient.sendTransaction({
+const hash = await PimlicoSmartAccountClient.sendTransaction({
   calls: [
     {
       to: "0x0000000000000000000000000000000000000000" as `0x${string}`,
@@ -79,7 +79,7 @@ const hash = await smartAccountClient.sendTransaction({
 #### Gelato Smart Wallet SDK + Light Account
 
 ```typescript
-const userOpHash = await smartAccountClient.sendUserOperation({
+const userOpHash = await gelatoSmartAccountClient.sendUserOperation({
   calls: [
     {
       to: zeroAddress,
@@ -177,8 +177,8 @@ export const useSendSmartWalletOrder = () => {
 
   const prepareAndSendUserOperation = useCallback(
     async (calls: ICalls[]) => {
-      const smartAccountClient = createSmartAccountClient({
-        account: account,
+      const gelatoSmartAccountClient = createSmartAccountClient({
+        account: smartAccountClient?.account,
         chain: arbitrumSepolia,
         // Important: Chain transport (chain rpc) must be passed here instead of bundler transport
         bundlerTransport: http(),
@@ -189,12 +189,13 @@ export const useSendSmartWalletOrder = () => {
         })
       );
 
-      const userOpHash = await smartAccountClient?.sendUserOperation({
+      const userOpHash = await gelatoSmartAccountClient?.sendUserOperation({
         calls: calls,
       });
-      const receipt = await bundler.waitForUserOperationReceipt({
-        hash: userOpHash,
-      });
+      const receipt =
+        await gelatoSmartAccountClient.waitForUserOperationReceipt({
+          hash: userOpHash,
+        });
 
       const transactionHash = receipt.receipt.transactionHash;
 
