@@ -58,14 +58,14 @@ const gelatoSmartAccountClient = createSmartAccountClient({
 );
 ```
 
-**Migration Change**: Remove Pimlico’s Paymaster client and replace it with Gelato’s one-step Smart Account Client integration.
+**Migration Change**: Remove Pimlico’s client config and replace it with Gelato’s Smart Account Client Adapter.
 
 ### 3. Sending Transaction
 
 #### Light Account + Pimlico
 
 ```typescript
-const hash = await PimlicoSmartAccountClient.sendTransaction({
+const hash = await pimlicoSmartAccountClient.sendTransaction({
   calls: [
     {
       to: "0x0000000000000000000000000000000000000000" as `0x${string}`,
