@@ -40,13 +40,26 @@ const pimlicoSmartAccountClient = createSmartAccountClient({
 ```typescript
 import { gelatoBundlerActions } from "@gelatonetwork/smartwallet/adapter";
 import { sponsored, WalletEncoding } from "@gelatonetwork/smartwallet";
+import { useWalletClient } from "wagmi";
 ```
 
 **Code**
 
 ```typescript
+const { data: walletClient } = useWalletClient();
+
+const smartAccount = await toLightSmartAccount({
+  client: publicClient as any,
+  owner: walletClient as any,
+  entryPoint: {
+    address: entryPoint07Address,
+    version: "0.7",
+  },
+  version: "2.0.0",
+});
+
 const gelatoSmartAccountClient = createSmartAccountClient({
-  account: smartAccountClient?.account,
+  account: smartAccount,
   chain: arbitrumSepolia,
   // Important: Chain transport (chain rpc) must be passed here instead of bundler transport
   bundlerTransport: http(),
@@ -163,8 +176,8 @@ export const useSendSmartWalletOrder = () => {
 // AFTER: Gelato Smart Wallet SDK + Light Account
 import { useCallback } from "react";
 import { createSmartAccountClient } from "permissionless";
-import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 import { arbitrum } from "viem/chains";
+import { useWalletClient } from "wagmi";
 import { http } from "viem";
 
 interface ICalls {
@@ -173,12 +186,22 @@ interface ICalls {
 }
 
 export const useSendSmartWalletOrder = () => {
-  const { client: smartAccountClient } = useSmartWallets();
+  const { data: walletClient } = useWalletClient();
 
   const prepareAndSendUserOperation = useCallback(
     async (calls: ICalls[]) => {
+      const smartAccount = await toLightSmartAccount({
+        client: publicClient as any,
+        owner: walletClient as any,
+        entryPoint: {
+          address: entryPoint07Address,
+          version: "0.7",
+        },
+        version: "2.0.0",
+      });
+
       const gelatoSmartAccountClient = createSmartAccountClient({
-        account: smartAccountClient?.account,
+        account: smartAccount,
         chain: arbitrumSepolia,
         // Important: Chain transport (chain rpc) must be passed here instead of bundler transport
         bundlerTransport: http(),
@@ -192,6 +215,7 @@ export const useSendSmartWalletOrder = () => {
       const userOpHash = await gelatoSmartAccountClient?.sendUserOperation({
         calls: calls,
       });
+
       const receipt =
         await gelatoSmartAccountClient.waitForUserOperationReceipt({
           hash: userOpHash,
@@ -226,10 +250,12 @@ export const useSendSmartWalletOrder = () => {
 
 The main differences between the two approaches are:
 
-1. **Account Creation**: Same for both approaches (3 steps)
-2. **Client Setup**:
-   - Pimlico: Requires separate Pimlico client creation + SmartAccountClient with paymaster
-   - Gelato: Single SmartAccountClient with Gelato bundler actions extension
+1. **Account Creation**: The current implementation uses useSmartWallets() from Pyth, which creates an EntryPoint v0.6 account. However, this is not compatible with Gelato Smart Wallets, which require EntryPoint v0.7.
+
+   So You must explicitly create a LightAccount using EntryPoint v0.7 to ensure compatibility with the Gelato Smart Wallet system.
+
+2. **Client Creation**: When setting up the smart account client, extend it with `gelatoBundlerActions` to enable Gelato-specific functionalities.
+
 3. **Transaction Flow**:
    - Pimlico: Uses `sendTransaction()` method
    - Gelato: Uses `sendUserOperation()` method
